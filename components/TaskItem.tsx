@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Task } from '../data/tasks';
-import TaskMeta from './TaskMeta';
-import { Colors, TextStyles, Spacing } from '../constants/theme';
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Colors, Spacing, TextStyles } from "../constants/theme";
+import { Task } from "../data/tasks";
+import TaskMeta from "./TaskMeta";
 
 type TaskItemProps = {
   task: Task;
@@ -22,7 +22,11 @@ export default function TaskItem({ task, onToggle }: TaskItemProps) {
 
       <View style={styles.content}>
         <Text
-          style={task.completed ? TextStyles.taskTitleCompleted : TextStyles.taskTitle}
+          style={
+            task.completed
+              ? TextStyles.taskTitleCompleted
+              : TextStyles.taskTitle
+          }
           numberOfLines={1}
         >
           {task.title}
@@ -35,19 +39,18 @@ export default function TaskItem({ task, onToggle }: TaskItemProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignSelf: 'stretch',
+    flexDirection: "row",
+    alignSelf: "stretch",
     gap: Spacing.taskRowGap,
   },
   checkbox: {
     width: Spacing.checkboxSize,
     height: Spacing.checkboxSize,
     borderRadius: Spacing.checkboxRadius,
-    borderWidth: 1.125,
+    borderWidth: 1.5,
     borderColor: Colors.checkboxBorder,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 2,
+    justifyContent: "center",
+    alignItems: "center",
   },
   checkboxChecked: {
     backgroundColor: Colors.textPrimary,
@@ -59,12 +62,12 @@ const styles = StyleSheet.create({
     borderLeftWidth: 1.5,
     borderBottomWidth: 1.5,
     borderColor: Colors.background,
-    transform: [{ rotate: '-45deg' }],
+    transform: [{ rotate: "-45deg" }],
     marginTop: -2,
   },
   content: {
-    flexDirection: 'column',
-    gap: 14,
+    flexDirection: "column",
+    gap: Spacing.taskContentGap,
     flex: 1,
   },
 });

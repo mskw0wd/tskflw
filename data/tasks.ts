@@ -6,6 +6,13 @@ export type Task = {
   completed: boolean;
 };
 
+export const todayScreenMeta = {
+  greetingName: 'Max',
+  summaryPrefix: 'You have',
+  summaryValue: '7 tasks today',
+  tasksRemaining: 4,
+} as const;
+
 export const tasks: Task[] = [
   {
     id: 'task-1',
@@ -19,7 +26,7 @@ export const tasks: Task[] = [
     title: 'Sync with design on empty states',
     project: 'Design',
     dueDate: 'Today, 11:45',
-    completed: true,
+    completed: false,
   },
   {
     id: 'task-3',
@@ -47,7 +54,7 @@ export const tasks: Task[] = [
     title: 'Fix calendar timezone mismatch',
     project: 'Mobile',
     dueDate: 'Today, 17:15',
-    completed: true,
+    completed: false,
   },
   {
     id: 'task-7',

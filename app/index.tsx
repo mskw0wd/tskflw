@@ -1,5 +1,5 @@
-import * as Haptics from "expo-haptics";
-import React, { useRef, useState } from "react";
+import * as Haptics from 'expo-haptics';
+import React, { useRef, useState } from 'react';
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -8,19 +8,19 @@ import {
   Text,
   useWindowDimensions,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import TabSwitcher, { TabName, TABS } from "@/components/TabSwitcher";
-import TaskItem from "@/components/TaskItem";
-import FooterComposer from "../components/FooterComposer";
-import TodayHeader from "../components/TodayHeader";
-import { Colors, Spacing, TextStyles } from "../constants/theme";
-import { tasks as initialTasks } from "../data/tasks";
+import FooterComposer from '../components/FooterComposer';
+import TabSwitcher, { TABS, TabName } from '../components/TabSwitcher';
+import TaskItem from '../components/TaskItem';
+import TodayHeader from '../components/TodayHeader';
+import { Colors, Spacing, TextStyles } from '../constants/theme';
+import { tasks, todayScreenMeta } from '../data/tasks';
 
 function UpcomingPage() {
   return (
-    <View style={pageStyles.empty}>
+    <View style={styles.emptyPage}>
       <Text style={TextStyles.footerLabel}>Nothing upcoming yet.</Text>
     </View>
   );
@@ -28,108 +28,91 @@ function UpcomingPage() {
 
 function ProjectsPage() {
   return (
-    <View style={pageStyles.empty}>
+    <View style={styles.emptyPage}>
       <Text style={TextStyles.footerLabel}>No projects yet.</Text>
     </View>
   );
 }
 
-const pageStyles = StyleSheet.create({
-  empty: {
-    flex: 1,
-    paddingTop: 48,
-    alignItems: "flex-start",
-    paddingHorizontal: Spacing.screenPadding,
-  },
-});
-
 export default function TodayScreen() {
   const { width: screenWidth } = useWindowDimensions();
-  const [tasks, setTasks] = useState(initialTasks);
-  const [activeTab, setActiveTab] = useState<TabName>("Today");
+  const pageWidth = screenWidth - Spacing.screenPadding * 2;
+
   const pagerRef = useRef<ScrollView>(null);
+  const [activeTab, setActiveTab] = useState<TabName>('Today');
 
-  const tasksRemaining = tasks.filter((t) => !t.completed).length;
-
-  const handleToggle = (id: string) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
-    );
-  };
-
-  const handleMomentumScrollEnd = (
-    e: NativeSyntheticEvent<NativeScrollEvent>,
-  ) => {
-    const offsetX = e.nativeEvent.contentOffset.x;
-    const index = Math.round(offsetX / screenWidth);
-    const tab = TABS[index];
-    if (tab && tab !== activeTab) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setActiveTab(tab);
-    }
+  const triggerHaptic = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handleTabChange = (tab: TabName, index: number) => {
+    triggerHaptic();
     setActiveTab(tab);
-    pagerRef.current?.scrollTo({ x: index * screenWidth, animated: true });
+    pagerRef.current?.scrollTo({ x: index * pageWidth, animated: true });
+  };
+
+  const handleMomentumScrollEnd = (
+    event: NativeSyntheticEvent<NativeScrollEvent>,
+  ) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offsetX / pageWidth);
+    const nextTab = TABS[index];
+
+    if (!nextTab || nextTab === activeTab) {
+      return;
+    }
+
+    triggerHaptic();
+    setActiveTab(nextTab);
   };
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.root}>
-        {/* Sticky header + tabs */}
-        <View style={styles.topArea}>
-          <TodayHeader userName="Max" />
+        <View style={styles.content}>
+          <TodayHeader userName={todayScreenMeta.greetingName} />
           <TabSwitcher activeTab={activeTab} onTabChange={handleTabChange} />
-        </View>
 
-        {/* Horizontal swipe pager */}
-        <ScrollView
-          ref={pagerRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={handleMomentumScrollEnd}
-          scrollEventThrottle={16}
-          style={styles.pager}
-          contentContainerStyle={styles.pagerContent}
-        >
-          {/* Page 0 — Today */}
           <ScrollView
-            style={[styles.page, { width: screenWidth }]}
-            contentContainerStyle={styles.pageContent}
-            showsVerticalScrollIndicator={false}
+            ref={pagerRef}
+            horizontal
+            pagingEnabled
+            bounces={false}
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={handleMomentumScrollEnd}
+            style={styles.pager}
           >
-            {/* Summary row: "You have" · "7" · "tasks today" */}
-            <View style={styles.summaryRow}>
-              <Text style={TextStyles.summaryMuted}>You have</Text>
-              <Text style={TextStyles.summaryStrong}>{tasks.length}</Text>
-              <Text style={TextStyles.summaryMuted}>tasks today</Text>
+            <ScrollView
+              style={[styles.page, { width: pageWidth }]}
+              contentContainerStyle={styles.pageContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.summaryRow}>
+                <Text style={TextStyles.summaryMuted}>{todayScreenMeta.summaryPrefix}</Text>
+                <Text style={TextStyles.summaryStrong}>{todayScreenMeta.summaryValue}</Text>
+              </View>
+
+              <View style={styles.taskList}>
+                {tasks.map((task) => (
+                  <TaskItem key={task.id} task={task} />
+                ))}
+              </View>
+            </ScrollView>
+
+            <View style={[styles.page, { width: pageWidth }]}>
+              <UpcomingPage />
             </View>
 
-            <View style={styles.taskList}>
-              {tasks.map((task) => (
-                <TaskItem key={task.id} task={task} onToggle={handleToggle} />
-              ))}
+            <View style={[styles.page, { width: pageWidth }]}>
+              <ProjectsPage />
             </View>
           </ScrollView>
+        </View>
 
-          {/* Page 1 — Upcoming */}
-          <View style={{ width: screenWidth, flex: 1 }}>
-            <UpcomingPage />
-          </View>
-
-          {/* Page 2 — Projects */}
-          <View style={{ width: screenWidth, flex: 1 }}>
-            <ProjectsPage />
-          </View>
-        </ScrollView>
-
-        {/* Fixed footer */}
         <FooterComposer
-          tasksRemaining={tasksRemaining}
-          onAdd={() => console.log("Add task")}
-          onVoice={() => console.log("Voice input")}
+          tasksRemaining={todayScreenMeta.tasksRemaining}
+          onAdd={() => console.log('Add task')}
+          onVoice={() => console.log('Voice input')}
         />
       </View>
     </SafeAreaView>
@@ -145,33 +128,32 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  topArea: {
+  content: {
+    flex: 1,
     paddingHorizontal: Spacing.screenPadding,
-    paddingTop: 16,
-    gap: 20,
-    backgroundColor: Colors.background,
+    paddingVertical: 0,
+    gap: Spacing.sectionGap,
   },
   pager: {
     flex: 1,
-  },
-  pagerContent: {
-    alignItems: "flex-start",
   },
   page: {
     flex: 1,
   },
   pageContent: {
-    paddingHorizontal: Spacing.screenPadding,
-    paddingTop: 24,
     paddingBottom: Spacing.sectionGap,
-    gap: 24,
+    gap: Spacing.sectionGap,
   },
   summaryRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.summaryGap,
   },
   taskList: {
     gap: Spacing.taskGap,
+  },
+  emptyPage: {
+    flex: 1,
+    paddingTop: Spacing.contentPaddingVertical,
   },
 });
