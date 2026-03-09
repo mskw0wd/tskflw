@@ -1,27 +1,31 @@
-import type { TextStyle } from 'react-native';
+// ─── Raw Tokens ────────────────────────────────────────────────────────────────
 
-const palette = {
+export const Colors = {
   // Backgrounds
   background: '#FFFFFF',
   addButtonBackground: '#F5F4ED',
   footerBackground: '#FFFFFF',
 
-  // Text hierarchy
+  // Text hierarchy — four levels
   textPrimary: '#141413',
   textSecondary: '#3D3D3A',
   textTertiary: '#6B6A82',
   textMuted: 'rgba(107, 106, 134, 0.55)',
 
-  // Semantic aliases
+  // Semantic color aliases
   greetingLabel: '#6B6A82',
   greetingName: '#141413',
+
   summaryLabel: '#6B6A82',
   summaryCount: '#141413',
   summaryText: '#3D3D3A',
+
   footerCount: '#141413',
   footerLabel: '#6B6A82',
+
   taskTitle: '#3D3D3A',
   taskTitleDone: 'rgba(107, 106, 134, 0.45)',
+
   taskMeta: '#9998AF',
 
   // Tabs
@@ -36,28 +40,7 @@ const palette = {
   // Icons
   black: '#29333F',
   iconStroke: '#1C274C',
-} as const;
-
-export const Colors = {
-  ...palette,
-  // Expo template compatibility for useThemeColor and UI primitives.
-  light: {
-    text: palette.textSecondary,
-    background: palette.background,
-    tint: palette.textPrimary,
-    icon: palette.iconStroke,
-    tabIconDefault: palette.textMuted,
-    tabIconSelected: palette.textPrimary,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: '#FFFFFF',
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: '#FFFFFF',
-  },
-} as const;
+};
 
 export const FontFamily = {
   regular: 'PTRootUI-Regular',
@@ -100,7 +83,13 @@ export const Spacing = {
   footerActionGap: 10,
 };
 
-export const TextStyles: Record<string, TextStyle> = {
+// ─── Semantic Text Styles ──────────────────────────────────────────────────────
+// Composed from raw tokens. Use these in components instead of rebuilding
+// font properties manually. Layout-specific properties (flex, width, etc.)
+// remain in component StyleSheets.
+
+export const TextStyles = {
+  // Tab labels — large editorial H1
   heroTabActive: {
     fontFamily: FontFamily.medium,
     fontSize: FontSize.h1,
@@ -116,7 +105,9 @@ export const TextStyles: Record<string, TextStyle> = {
     color: Colors.tabInactive,
   },
 
+  // Header greeting
   headerSecondary: {
+    // "Hey," — softer, regular weight
     fontFamily: FontFamily.regular,
     fontSize: FontSize.medium,
     lineHeight: LineHeight.medium,
@@ -124,6 +115,7 @@ export const TextStyles: Record<string, TextStyle> = {
     color: Colors.greetingLabel,
   },
   headerPrimary: {
+    // "Max" — stronger, medium weight
     fontFamily: FontFamily.medium,
     fontSize: FontSize.medium,
     lineHeight: LineHeight.medium,
@@ -131,7 +123,9 @@ export const TextStyles: Record<string, TextStyle> = {
     color: Colors.greetingName,
   },
 
+  // Summary row above task list
   summaryMuted: {
+    // "You have" — tertiary, softest
     fontFamily: FontFamily.regular,
     fontSize: FontSize.medium,
     lineHeight: LineHeight.medium,
@@ -139,6 +133,7 @@ export const TextStyles: Record<string, TextStyle> = {
     color: Colors.summaryLabel,
   },
   summaryStrong: {
+    // "7 tasks today" — number primary, rest secondary
     fontFamily: FontFamily.medium,
     fontSize: FontSize.medium,
     lineHeight: LineHeight.medium,
@@ -146,6 +141,7 @@ export const TextStyles: Record<string, TextStyle> = {
     color: Colors.summaryCount,
   },
 
+  // Task list
   taskTitle: {
     fontFamily: FontFamily.medium,
     fontSize: FontSize.medium,
@@ -159,7 +155,7 @@ export const TextStyles: Record<string, TextStyle> = {
     lineHeight: LineHeight.medium,
     letterSpacing: LetterSpacing.medium,
     color: Colors.taskTitleDone,
-    textDecorationLine: 'line-through',
+    textDecorationLine: 'line-through' as const,
   },
   taskMeta: {
     fontFamily: FontFamily.medium,
@@ -169,7 +165,9 @@ export const TextStyles: Record<string, TextStyle> = {
     color: Colors.taskMeta,
   },
 
+  // Footer summary
   footerCount: {
+    // Number — strongest
     fontFamily: FontFamily.medium,
     fontSize: FontSize.medium,
     lineHeight: LineHeight.medium,
@@ -177,10 +175,11 @@ export const TextStyles: Record<string, TextStyle> = {
     color: Colors.footerCount,
   },
   footerLabel: {
+    // "tasks left" — softer
     fontFamily: FontFamily.regular,
     fontSize: FontSize.medium,
     lineHeight: LineHeight.medium,
     letterSpacing: LetterSpacing.medium,
     color: Colors.footerLabel,
   },
-};
+} as const;
