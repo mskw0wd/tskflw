@@ -5,17 +5,20 @@ import { TextStyles, Spacing } from '../constants/theme';
 type TaskMetaProps = {
   project: string;
   dueDate: string;
+  showDueDate?: boolean;
 };
 
-export default function TaskMeta({ project, dueDate }: TaskMetaProps) {
+export default function TaskMeta({ project, dueDate, showDueDate = true }: TaskMetaProps) {
   return (
     <View style={styles.container}>
       <Text style={[TextStyles.taskMeta, styles.project]} numberOfLines={1}>
         {project}
       </Text>
-      <Text style={[TextStyles.taskMeta, styles.dueDate]} numberOfLines={1}>
-        {dueDate}
-      </Text>
+      {showDueDate ? (
+        <Text style={[TextStyles.taskMeta, styles.dueDate]} numberOfLines={1}>
+          {dueDate}
+        </Text>
+      ) : null}
     </View>
   );
 }

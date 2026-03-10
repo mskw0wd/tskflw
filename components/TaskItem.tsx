@@ -1,20 +1,75 @@
-import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef } from "react";
+import {
+  Animated,
+  Easing,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Colors, Spacing, TextStyles } from "../constants/theme";
 import { Task } from "../data/tasks";
 import TaskMeta from "./TaskMeta";
 
 type TaskItemProps = {
   task: Task;
+  showDueDate?: boolean;
   onToggle?: (id: string) => void;
+  isRemoving?: boolean;
+  onRemoveAnimationEnd?: (id: string) => void;
 };
 
-export default function TaskItem({ task, onToggle }: TaskItemProps) {
+export default function TaskItem({
+  task,
+  showDueDate = true,
+  onToggle,
+  isRemoving = false,
+  onRemoveAnimationEnd,
+}: TaskItemProps) {
+  const fade = useRef(new Animated.Value(1)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+  const hasStartedExit = useRef(false);
+
+  useEffect(() => {
+    if (!isRemoving || hasStartedExit.current) {
+      return;
+    }
+
+    hasStartedExit.current = true;
+    Animated.parallel([
+      Animated.timing(fade, {
+        toValue: 0,
+        duration: 380,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 0.96,
+        duration: 380,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start(({ finished }) => {
+      if (finished) {
+        onRemoveAnimationEnd?.(task.id);
+      }
+    });
+  }, [fade, isRemoving, onRemoveAnimationEnd, scale, task.id]);
+
   return (
-    <View style={styles.container}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          opacity: fade,
+          transform: [{ scaleY: scale }],
+        },
+      ]}
+    >
       <TouchableOpacity
         style={[styles.checkbox, task.completed && styles.checkboxChecked]}
         onPress={() => onToggle?.(task.id)}
+        disabled={task.completed || isRemoving}
         activeOpacity={0.7}
       >
         {task.completed && <View style={styles.checkmark} />}
@@ -32,9 +87,9 @@ export default function TaskItem({ task, onToggle }: TaskItemProps) {
         >
           {task.title}
         </Text>
-        <TaskMeta project={task.project} dueDate={task.dueDate} />
+        <TaskMeta project={task.project} dueDate={task.dueDate} showDueDate={showDueDate} />
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

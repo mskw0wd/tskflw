@@ -132,7 +132,7 @@ export const Spacing = {
   // Footer
   footerPaddingVertical: 16,
   footerPaddingHorizontal: 24,
-  footerLeftActionsGap: 6,
+  footerLeftActionsGap: 4,
   footerRightActionsGap: 8,
   footerActionRadius: 30,
   footerInactivePillPaddingHorizontal: 10,

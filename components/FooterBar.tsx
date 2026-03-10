@@ -14,8 +14,36 @@ type FooterBarProps = {
   onVoice?: () => void;
 };
 
-const LEFT_RAIL_MAX_WIDTH = 232;
+const LEFT_RAIL_MAX_WIDTH = 224;
 const TAB_HEIGHT = 44;
+const ICON_SIZE = 20;
+const ACTIVE_HORIZONTAL_PADDING_LEFT = 20;
+const ACTIVE_HORIZONTAL_PADDING_RIGHT = 16;
+const ACTIVE_CONTENT_GAP = 8;
+const INACTIVE_BUTTON_SIZE = 40;
+const INTER_BUTTON_GAP = Spacing.footerLeftActionsGap;
+const TODAY_LABEL_WIDTH = 41;
+const UPCOMING_LABEL_WIDTH = 72;
+const PROJECT_LABEL_WIDTH = 50;
+const TODAY_ACTIVE_WIDTH =
+  ACTIVE_HORIZONTAL_PADDING_LEFT +
+  ACTIVE_HORIZONTAL_PADDING_RIGHT +
+  ICON_SIZE +
+  ACTIVE_CONTENT_GAP +
+  TODAY_LABEL_WIDTH;
+const UPCOMING_ACTIVE_WIDTH =
+  ACTIVE_HORIZONTAL_PADDING_LEFT +
+  ACTIVE_HORIZONTAL_PADDING_RIGHT +
+  ICON_SIZE +
+  ACTIVE_CONTENT_GAP +
+  UPCOMING_LABEL_WIDTH;
+const PROJECT_ACTIVE_WIDTH =
+  ACTIVE_HORIZONTAL_PADDING_LEFT +
+  ACTIVE_HORIZONTAL_PADDING_RIGHT +
+  ICON_SIZE +
+  ACTIVE_CONTENT_GAP +
+  PROJECT_LABEL_WIDTH;
+const ACTIVE_LABEL_LEFT = ACTIVE_HORIZONTAL_PADDING_LEFT + ICON_SIZE + ACTIVE_CONTENT_GAP; // 48
 
 type IconType = 'home' | 'folder' | 'layers';
 
@@ -69,31 +97,23 @@ function FolderIcon() {
 
 function LayersIcon() {
   return (
-    <View style={styles.iconFrame}>
-      <Svg style={styles.layersTop} width={16.667} height={6.667} viewBox="0 0 17.9167 7.91667" fill="none">
-        <Path
-          d="M3.10736 5.36257C1.45245 4.7006 0.625 4.36962 0.625 3.95833C0.625 3.54704 1.45245 3.21606 3.10736 2.5541L5.44775 1.61794C7.10265 0.955981 7.93011 0.625 8.95833 0.625C9.98656 0.625 10.814 0.955981 12.4689 1.61794L14.8093 2.5541C16.4642 3.21606 17.2917 3.54704 17.2917 3.95833C17.2917 4.36962 16.4642 4.7006 14.8093 5.36257L12.4689 6.29872C10.814 6.96069 9.98656 7.29167 8.95833 7.29167C7.93011 7.29167 7.10265 6.96069 5.44775 6.29872L3.10736 5.36257Z"
-          stroke={Colors.iconStroke}
-          strokeWidth={1.25}
-        />
-      </Svg>
-
-      <Svg style={styles.layersMid} width={16.667} height={5} viewBox="0 0 17.9167 6.2053" fill="none">
-        <Path
-          d="M3.76344 0.580298L3.10736 0.84273C1.45245 1.50469 0.625 1.83567 0.625 2.24696C0.625 2.65826 1.45245 2.98924 3.10736 3.6512L5.44775 4.58735C7.10265 5.24932 7.93011 5.5803 8.95833 5.5803C9.98656 5.5803 10.814 5.24932 12.4689 4.58735L14.8093 3.6512C16.4642 2.98924 17.2917 2.65826 17.2917 2.24696C17.2917 1.83567 16.4642 1.50469 14.8093 0.84273L14.1532 0.580298"
-          stroke={Colors.iconStroke}
-          strokeWidth={1.25}
-        />
-      </Svg>
-
-      <Svg style={styles.layersBottom} width={16.667} height={5} viewBox="0 0 17.9167 6.2053" fill="none">
-        <Path
-          d="M3.76344 0.580298L3.10736 0.84273C1.45245 1.50469 0.625 1.83567 0.625 2.24696C0.625 2.65826 1.45245 2.98924 3.10736 3.6512L5.44775 4.58735C7.10265 5.24932 7.93011 5.5803 8.95833 5.5803C9.98656 5.5803 10.814 5.24932 12.4689 4.58735L14.8093 3.6512C16.4642 2.98924 17.2917 2.65826 17.2917 2.24696C17.2917 1.83567 16.4642 1.50469 14.8093 0.84273L14.1532 0.580298"
-          stroke={Colors.iconStroke}
-          strokeWidth={1.25}
-        />
-      </Svg>
-    </View>
+    <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
+      <Path
+        d="M4.14905 6.07094C2.49414 5.40898 1.66669 5.078 1.66669 4.66671C1.66669 4.25542 2.49414 3.92444 4.14905 3.26247L6.48944 2.32632C8.14434 1.66436 8.97179 1.33337 10 1.33337C11.0282 1.33337 11.8557 1.66436 13.5106 2.32632L15.851 3.26247C17.5059 3.92444 18.3334 4.25542 18.3334 4.66671C18.3334 5.078 17.5059 5.40898 15.851 6.07094L13.5106 7.0071C11.8557 7.66906 11.0282 8.00004 10 8.00004C8.97179 8.00004 8.14434 7.66906 6.48944 7.0071L4.14905 6.07094Z"
+        stroke={Colors.iconStroke}
+        strokeWidth={1.25}
+      />
+      <Path
+        d="M6.48944 6.99294L5.31924 7.46102L4.14905 7.9291C2.49414 8.59106 1.66669 8.92204 1.66669 9.33333C1.66669 9.74462 2.49414 10.0756 4.14905 10.7376L6.48944 11.6737C8.14434 12.3357 8.97179 12.6667 10 12.6667C11.0282 12.6667 11.8557 12.3357 13.5106 11.6737L15.851 10.7376C17.5059 10.0756 18.3334 9.74462 18.3334 9.33333C18.3334 8.92204 17.5059 8.59106 15.851 7.9291L13.5106 6.99294"
+        stroke={Colors.iconStroke}
+        strokeWidth={1.25}
+      />
+      <Path
+        d="M6.48944 11.6596L4.14905 12.5957C2.49414 13.2577 1.66669 13.5887 1.66669 14C1.66669 14.4113 2.49414 14.7422 4.14905 15.4042L6.48944 16.3403C8.14434 17.0023 8.97179 17.3333 10 17.3333C11.0282 17.3333 11.8557 17.0023 13.5106 16.3403L15.851 15.4042C17.5059 14.7422 18.3334 14.4113 18.3334 14C18.3334 13.5887 17.5059 13.2577 15.851 12.5957L13.5106 11.6596"
+        stroke={Colors.iconStroke}
+        strokeWidth={1.25}
+      />
+    </Svg>
   );
 }
 
@@ -151,26 +171,38 @@ export default function FooterBar({
     });
 
   const todayLeft = interpolate([0, 0, 0]);
-  const todayWidth = interpolate([109, 40, 40]);
-  const todayIconLeft = interpolate([20, 10, 10]);
+  const todayWidth = interpolate([TODAY_ACTIVE_WIDTH, INACTIVE_BUTTON_SIZE, INACTIVE_BUTTON_SIZE]);
+  const todayIconLeft = interpolate([ACTIVE_HORIZONTAL_PADDING_LEFT, 10, 10]);
   const todayActiveOpacity = interpolate([1, 0, 0]);
   const todayLabelOpacity = interpolate([1, 0, 0]);
 
-  const upcomingLeft = interpolate([115, 46, 46]);
-  const upcomingWidth = interpolate([40, 140, 40]);
-  const upcomingIconLeft = interpolate([10, 20, 10]);
+  const upcomingLeft = interpolate([
+    TODAY_ACTIVE_WIDTH + INTER_BUTTON_GAP,
+    INACTIVE_BUTTON_SIZE + INTER_BUTTON_GAP,
+    INACTIVE_BUTTON_SIZE + INTER_BUTTON_GAP,
+  ]);
+  const upcomingWidth = interpolate([
+    INACTIVE_BUTTON_SIZE,
+    UPCOMING_ACTIVE_WIDTH,
+    INACTIVE_BUTTON_SIZE,
+  ]);
+  const upcomingIconLeft = interpolate([10, ACTIVE_HORIZONTAL_PADDING_LEFT, 10]);
   const upcomingActiveOpacity = interpolate([0, 1, 0]);
   const upcomingLabelOpacity = interpolate([0, 1, 0]);
-  const upcomingFolderOpacity = interpolate([1, 1, 0]);
-  const upcomingLayersOpacity = interpolate([0, 0, 1]);
 
-  const projectLeft = interpolate([161, 192, 92]);
-  const projectWidth = interpolate([40, 40, 118]);
-  const projectIconLeft = interpolate([10, 10, 20]);
+  const projectLeft = interpolate([
+    TODAY_ACTIVE_WIDTH + INTER_BUTTON_GAP + INACTIVE_BUTTON_SIZE + INTER_BUTTON_GAP,
+    INACTIVE_BUTTON_SIZE + INTER_BUTTON_GAP + UPCOMING_ACTIVE_WIDTH + INTER_BUTTON_GAP,
+    INACTIVE_BUTTON_SIZE + INTER_BUTTON_GAP + INACTIVE_BUTTON_SIZE + INTER_BUTTON_GAP,
+  ]);
+  const projectWidth = interpolate([
+    INACTIVE_BUTTON_SIZE,
+    INACTIVE_BUTTON_SIZE,
+    PROJECT_ACTIVE_WIDTH,
+  ]);
+  const projectIconLeft = interpolate([10, 10, ACTIVE_HORIZONTAL_PADDING_LEFT]);
   const projectActiveOpacity = interpolate([0, 0, 1]);
   const projectLabelOpacity = interpolate([0, 0, 1]);
-  const projectLayersOpacity = interpolate([1, 1, 0]);
-  const projectFolderOpacity = interpolate([0, 0, 1]);
 
   return (
     <View style={styles.container}>
@@ -205,12 +237,7 @@ export default function FooterBar({
               <Animated.View style={[styles.activePill, { opacity: upcomingActiveOpacity }]} />
 
               <Animated.View style={[styles.iconSlot, { left: upcomingIconLeft }]}>
-                <Animated.View style={[styles.iconLayer, { opacity: upcomingFolderOpacity }]}>
-                  <TabIcon type="folder" />
-                </Animated.View>
-                <Animated.View style={[styles.iconLayer, { opacity: upcomingLayersOpacity }]}>
-                  <TabIcon type="layers" />
-                </Animated.View>
+                <TabIcon type="folder" />
               </Animated.View>
 
               <Animated.Text style={[TextStyles.footerLabel, styles.tabLabel, { opacity: upcomingLabelOpacity }]}>
@@ -229,12 +256,7 @@ export default function FooterBar({
               <Animated.View style={[styles.activePill, { opacity: projectActiveOpacity }]} />
 
               <Animated.View style={[styles.iconSlot, { left: projectIconLeft }]}>
-                <Animated.View style={[styles.iconLayer, { opacity: projectLayersOpacity }]}>
-                  <TabIcon type="layers" />
-                </Animated.View>
-                <Animated.View style={[styles.iconLayer, { opacity: projectFolderOpacity }]}>
-                  <TabIcon type="folder" />
-                </Animated.View>
+                <TabIcon type="layers" />
               </Animated.View>
 
               <Animated.Text style={[TextStyles.footerLabel, styles.tabLabel, { opacity: projectLabelOpacity }]}>
@@ -301,13 +323,10 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
   },
-  iconLayer: {
-    ...StyleSheet.absoluteFillObject,
-  },
   tabLabel: {
     position: 'absolute',
     top: 16.5,
-    left: 48,
+    left: ACTIVE_LABEL_LEFT,
   },
   rightActions: {
     flexDirection: 'row',
@@ -336,20 +355,5 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 1.666,
     top: 10,
-  },
-  layersTop: {
-    position: 'absolute',
-    left: 1.666,
-    top: 3.333,
-  },
-  layersMid: {
-    position: 'absolute',
-    left: 1.666,
-    top: 8.333,
-  },
-  layersBottom: {
-    position: 'absolute',
-    left: 1.666,
-    top: 11.666,
   },
 });
