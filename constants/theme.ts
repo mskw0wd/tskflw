@@ -1,54 +1,55 @@
 import type { TextStyle } from 'react-native';
 
 const palette = {
-  // Backgrounds
-  background: '#FFFFFF',
-  addButtonBackground: '#F5F4ED',
-  footerBackground: '#FFFFFF',
+  backgroundPrimary: '#FFFFFF',
+  backgroundSecondary: '#F5F4ED',
+  footerActiveBackground: '#F5F4ED',
 
-  // Text hierarchy
   textPrimary: '#141413',
   textSecondary: '#3D3D3A',
   textTertiary: 'rgba(107, 106, 134, 0.7)',
-  textMuted: 'rgba(107, 106, 134, 0.7)',
+  textOnActive: '#3D3D3A',
 
-  // Semantic aliases
-  greetingLabel: '#3D3D3A',
-  greetingName: '#141413',
-  summaryLabel: 'rgba(107, 106, 134, 0.7)',
-  summaryCount: '#3D3D3A',
-  summaryText: '#3D3D3A',
-  footerCount: '#3D3D3A',
-  footerLabel: 'rgba(107, 106, 134, 0.7)',
-  taskTitle: '#3D3D3A',
-  taskTitleDone: 'rgba(107, 106, 134, 0.45)',
-  taskMeta: 'rgba(107, 106, 134, 0.7)',
+  borderTertiary: 'rgba(31, 30, 29, 0.15)',
+  borderGhost: 'rgba(31, 30, 29, 0.1)',
 
-  // Tabs
-  tabActive: '#141413',
-  tabInactive: 'rgba(107, 106, 134, 0.7)',
-
-  // Borders / strokes
-  checkboxBorder: 'rgba(31, 30, 29, 0.15)',
-  avatarBorder: 'rgba(31, 30, 29, 0.15)',
-  footerBorder: 'rgba(31, 30, 29, 0.1)',
-
-  // Icons
-  black: '#000000',
   iconStroke: '#1C274C',
-  footerPlusIcon: '#1C274C',
-  footerMicIcon: '#000000',
+  iconBlack: '#000000',
 } as const;
 
 export const Colors = {
   ...palette,
-  // Expo template compatibility for useThemeColor and UI primitives.
+
+  // Semantic aliases
+  background: palette.backgroundPrimary,
+  addButtonBackground: palette.backgroundSecondary,
+  footerBackground: palette.backgroundPrimary,
+  greetingLabel: palette.textSecondary,
+  greetingName: palette.textPrimary,
+  summaryLabel: palette.textTertiary,
+  summaryCount: palette.textSecondary,
+  summaryText: palette.textSecondary,
+  footerLabel: palette.textTertiary,
+  footerCount: palette.textSecondary,
+  footerActiveLabel: palette.textOnActive,
+  taskTitle: palette.textSecondary,
+  taskTitleDone: 'rgba(107, 106, 134, 0.45)',
+  taskMeta: palette.textTertiary,
+  tabActive: palette.textPrimary,
+  tabInactive: palette.textTertiary,
+  checkboxBorder: palette.borderTertiary,
+  avatarBorder: palette.borderTertiary,
+  footerBorder: palette.borderGhost,
+  footerPlusIcon: palette.iconStroke,
+  footerMicIcon: palette.iconBlack,
+  black: palette.iconBlack,
+
   light: {
     text: palette.textSecondary,
-    background: palette.background,
+    background: palette.backgroundPrimary,
     tint: palette.textPrimary,
     icon: palette.iconStroke,
-    tabIconDefault: palette.textMuted,
+    tabIconDefault: palette.textTertiary,
     tabIconSelected: palette.textPrimary,
   },
   dark: {
@@ -64,34 +65,28 @@ export const Colors = {
 export const FontFamily = {
   regular: 'PTRootUI-Regular',
   medium: 'PTRootUI-Medium',
+  semibold: 'PTRootUI-Bold',
   bold: 'PTRootUI-Bold',
   fallback: 'System',
-};
+} as const;
 
 export const FontSize = {
-  small: 14,
-  medium: 16,
+  bodyMedium: 16,
   h1: 40,
-};
+} as const;
 
 export const LineHeight = {
-  small: 18,
-  medium: 20,
+  bodySmall: 20,
   h1: 48,
-};
+} as const;
 
 export const LetterSpacing = {
-  small: -0.3,
-  medium: -0.3,
+  bodyXSmall: -0.3,
+  bodySemibold: -0.1,
   h1: -1.5,
-  accent: -0.1,
-};
+} as const;
 
 const VerticalTrim = {
-  bodySmall: {
-    marginTop: -3.5,
-    marginBottom: -3.5,
-  },
   bodyMedium: {
     marginTop: -4.5,
     marginBottom: -4.5,
@@ -108,126 +103,190 @@ const withVerticalTrim = (style: TextStyle, trim: TextStyle): TextStyle => ({
   includeFontPadding: false,
 });
 
+const bodyMediumBase: TextStyle = {
+  fontSize: FontSize.bodyMedium,
+  lineHeight: LineHeight.bodySmall,
+};
+
 export const Spacing = {
+  // Global layout
   screenPadding: 24,
+  contentPaddingTop: 16,
   contentPaddingVertical: 16,
   headerVerticalPadding: 12,
-  tabGap: 24,
-  tabVerticalPadding: 48,
+  segmentedPaddingVertical: 32,
+  segmentTodayGap: 24,
+
+  // Summary
+  summaryGap: 4,
+  summaryWidth: 158,
+
+  // Tasks
   sectionGap: 32,
-  taskGap: 28,
+  taskGap: 24,
   taskRowGap: 16,
   taskContentGap: 14,
   taskMetaGap: 12,
-  footerPaddingVertical: 18,
+  taskListBottomPadding: 40,
+
+  // Footer
+  footerPaddingVertical: 16,
   footerPaddingHorizontal: 24,
-  footerActionGap: 12,
-  footerActionPaddingHorizontal: 24,
-  footerActionPaddingVertical: 10,
+  footerLeftActionsGap: 6,
+  footerRightActionsGap: 8,
+  footerActionRadius: 30,
+  footerInactivePillPaddingHorizontal: 10,
+  footerActivePillPaddingHorizontal: 20,
+  footerActionPaddingVertical: 12,
+  footerPrimaryActionPaddingHorizontal: 16,
+  // Legacy aliases for existing components.
+  footerActionGap: 8,
+  footerActionPaddingHorizontal: 16,
+
+  // Header/atoms
   checkboxSize: 20,
   checkboxRadius: 5,
+  checkboxStrokeWidth: 1.25,
   avatarSize: 44,
   avatarInner: 34,
   actionGap: 12,
-  summaryGap: 4,
-  summaryWidth: 158,
+
+  // Legacy tab values (kept for compatibility with existing component)
+  tabGap: 24,
+  tabVerticalPadding: 48,
   tabTodayWidth: 100,
   tabUpcomingWidth: 192,
   tabProjectsWidth: 137,
-};
+} as const;
 
 export const TextStyles: Record<string, TextStyle> = {
-  heroTabActive: withVerticalTrim({
-    fontFamily: FontFamily.bold,
-    fontWeight: '700',
-    fontSize: FontSize.h1,
-    lineHeight: LineHeight.h1,
-    letterSpacing: LetterSpacing.h1,
-    color: Colors.tabActive,
-  }, VerticalTrim.titleH1),
-  heroTabInactive: withVerticalTrim({
-    fontFamily: FontFamily.medium,
-    fontWeight: '500',
-    fontSize: FontSize.h1,
-    lineHeight: LineHeight.h1,
-    letterSpacing: LetterSpacing.h1,
-    color: Colors.tabInactive,
-  }, VerticalTrim.titleH1),
+  heroTabActive: withVerticalTrim(
+    {
+      fontFamily: FontFamily.bold,
+      fontWeight: '700',
+      fontSize: FontSize.h1,
+      lineHeight: LineHeight.h1,
+      letterSpacing: LetterSpacing.h1,
+      color: Colors.tabActive,
+    },
+    VerticalTrim.titleH1,
+  ),
+  heroTabInactive: withVerticalTrim(
+    {
+      fontFamily: FontFamily.medium,
+      fontWeight: '500',
+      fontSize: FontSize.h1,
+      lineHeight: LineHeight.h1,
+      letterSpacing: LetterSpacing.h1,
+      color: Colors.tabInactive,
+    },
+    VerticalTrim.titleH1,
+  ),
 
-  headerSecondary: withVerticalTrim({
-    fontFamily: FontFamily.regular,
-    fontWeight: '400',
-    fontSize: FontSize.medium,
-    lineHeight: LineHeight.medium,
-    letterSpacing: LetterSpacing.medium,
-    color: Colors.greetingLabel,
-  }, VerticalTrim.bodyMedium),
-  headerPrimary: withVerticalTrim({
-    fontFamily: FontFamily.bold,
-    fontWeight: '700',
-    fontSize: FontSize.medium,
-    lineHeight: LineHeight.medium,
-    letterSpacing: LetterSpacing.accent,
-    color: Colors.greetingName,
-  }, VerticalTrim.bodyMedium),
+  headerSecondary: withVerticalTrim(
+    {
+      ...bodyMediumBase,
+      fontFamily: FontFamily.regular,
+      fontWeight: '400',
+      letterSpacing: LetterSpacing.bodyXSmall,
+      color: Colors.greetingLabel,
+    },
+    VerticalTrim.bodyMedium,
+  ),
+  headerPrimary: withVerticalTrim(
+    {
+      ...bodyMediumBase,
+      fontFamily: FontFamily.semibold,
+      fontWeight: '700',
+      letterSpacing: LetterSpacing.bodySemibold,
+      color: Colors.greetingName,
+    },
+    VerticalTrim.bodyMedium,
+  ),
 
-  summaryMuted: withVerticalTrim({
-    fontFamily: FontFamily.medium,
-    fontWeight: '500',
-    fontSize: FontSize.medium,
-    lineHeight: LineHeight.medium,
-    letterSpacing: LetterSpacing.medium,
-    color: Colors.summaryLabel,
-  }, VerticalTrim.bodyMedium),
-  summaryStrong: withVerticalTrim({
-    fontFamily: FontFamily.medium,
-    fontWeight: '500',
-    fontSize: FontSize.medium,
-    lineHeight: LineHeight.medium,
-    letterSpacing: LetterSpacing.medium,
-    color: Colors.summaryCount,
-  }, VerticalTrim.bodyMedium),
+  screenTitle: withVerticalTrim(
+    {
+      fontFamily: FontFamily.bold,
+      fontWeight: '700',
+      fontSize: FontSize.h1,
+      lineHeight: LineHeight.h1,
+      letterSpacing: LetterSpacing.h1,
+      color: Colors.textPrimary,
+    },
+    VerticalTrim.titleH1,
+  ),
 
-  taskTitle: withVerticalTrim({
-    fontFamily: FontFamily.medium,
-    fontWeight: '500',
-    fontSize: FontSize.medium,
-    lineHeight: LineHeight.medium,
-    letterSpacing: LetterSpacing.medium,
-    color: Colors.taskTitle,
-  }, VerticalTrim.bodyMedium),
-  taskTitleCompleted: withVerticalTrim({
-    fontFamily: FontFamily.medium,
-    fontWeight: '500',
-    fontSize: FontSize.medium,
-    lineHeight: LineHeight.medium,
-    letterSpacing: LetterSpacing.medium,
-    color: Colors.taskTitleDone,
-    textDecorationLine: 'line-through',
-  }, VerticalTrim.bodyMedium),
-  taskMeta: withVerticalTrim({
-    fontFamily: FontFamily.medium,
-    fontWeight: '500',
-    fontSize: FontSize.medium,
-    lineHeight: LineHeight.medium,
-    letterSpacing: LetterSpacing.medium,
-    color: Colors.taskMeta,
-  }, VerticalTrim.bodyMedium),
+  summaryMuted: withVerticalTrim(
+    {
+      ...bodyMediumBase,
+      fontFamily: FontFamily.medium,
+      fontWeight: '500',
+      letterSpacing: LetterSpacing.bodyXSmall,
+      color: Colors.summaryLabel,
+    },
+    VerticalTrim.bodyMedium,
+  ),
+  summaryStrong: withVerticalTrim(
+    {
+      ...bodyMediumBase,
+      fontFamily: FontFamily.medium,
+      fontWeight: '500',
+      letterSpacing: LetterSpacing.bodyXSmall,
+      color: Colors.summaryCount,
+    },
+    VerticalTrim.bodyMedium,
+  ),
 
-  footerCount: withVerticalTrim({
-    fontFamily: FontFamily.medium,
-    fontWeight: '500',
-    fontSize: FontSize.medium,
-    lineHeight: LineHeight.medium,
-    letterSpacing: LetterSpacing.medium,
-    color: Colors.footerCount,
-  }, VerticalTrim.bodyMedium),
-  footerLabel: withVerticalTrim({
-    fontFamily: FontFamily.medium,
-    fontWeight: '500',
-    fontSize: FontSize.medium,
-    lineHeight: LineHeight.medium,
-    letterSpacing: LetterSpacing.medium,
-    color: Colors.footerLabel,
-  }, VerticalTrim.bodyMedium),
+  taskTitle: withVerticalTrim(
+    {
+      ...bodyMediumBase,
+      fontFamily: FontFamily.medium,
+      fontWeight: '500',
+      letterSpacing: LetterSpacing.bodyXSmall,
+      color: Colors.taskTitle,
+    },
+    VerticalTrim.bodyMedium,
+  ),
+  taskTitleCompleted: withVerticalTrim(
+    {
+      ...bodyMediumBase,
+      fontFamily: FontFamily.medium,
+      fontWeight: '500',
+      letterSpacing: LetterSpacing.bodyXSmall,
+      color: Colors.taskTitleDone,
+      textDecorationLine: 'line-through',
+    },
+    VerticalTrim.bodyMedium,
+  ),
+  taskMeta: withVerticalTrim(
+    {
+      ...bodyMediumBase,
+      fontFamily: FontFamily.medium,
+      fontWeight: '500',
+      letterSpacing: LetterSpacing.bodyXSmall,
+      color: Colors.taskMeta,
+    },
+    VerticalTrim.bodyMedium,
+  ),
+
+  footerLabel: withVerticalTrim(
+    {
+      ...bodyMediumBase,
+      fontFamily: FontFamily.medium,
+      fontWeight: '500',
+      letterSpacing: LetterSpacing.bodyXSmall,
+      color: Colors.footerActiveLabel,
+    },
+    VerticalTrim.bodyMedium,
+  ),
+  footerCount: withVerticalTrim(
+    {
+      ...bodyMediumBase,
+      fontFamily: FontFamily.medium,
+      fontWeight: '500',
+      letterSpacing: LetterSpacing.bodyXSmall,
+      color: Colors.footerCount,
+    },
+    VerticalTrim.bodyMedium,
+  ),
 };

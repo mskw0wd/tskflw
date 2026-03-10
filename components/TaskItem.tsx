@@ -22,11 +22,12 @@ export default function TaskItem({ task, onToggle }: TaskItemProps) {
 
       <View style={styles.content}>
         <Text
-          style={
+          style={[
             task.completed
               ? TextStyles.taskTitleCompleted
-              : TextStyles.taskTitle
-          }
+              : TextStyles.taskTitle,
+            styles.titleText,
+          ]}
           numberOfLines={1}
         >
           {task.title}
@@ -47,7 +48,7 @@ const styles = StyleSheet.create({
     width: Spacing.checkboxSize,
     height: Spacing.checkboxSize,
     borderRadius: Spacing.checkboxRadius,
-    borderWidth: 1.5,
+    borderWidth: Spacing.checkboxStrokeWidth,
     borderColor: Colors.checkboxBorder,
     justifyContent: "center",
     alignItems: "center",
@@ -69,5 +70,10 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     gap: Spacing.taskContentGap,
     flex: 1,
+  },
+  titleText: {
+    // Avoid clipping from global vertical trim on single-line task titles.
+    marginTop: 0,
+    marginBottom: 0,
   },
 });
