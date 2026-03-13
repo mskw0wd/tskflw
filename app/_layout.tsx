@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { Text, TextInput, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 void SplashScreen.preventAutoHideAsync();
@@ -51,15 +52,17 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: "#FFFFFF" },
-          }}
-        />
-      </View>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: "#FFFFFF" },
+            }}
+          />
+        </View>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

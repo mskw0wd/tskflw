@@ -72,17 +72,20 @@ export const FontFamily = {
 
 export const FontSize = {
   bodyMedium: 16,
+  titleH5: 20,
   h1: 40,
 } as const;
 
 export const LineHeight = {
   bodySmall: 20,
+  titleH5: 26,
   h1: 48,
 } as const;
 
 export const LetterSpacing = {
   bodyXSmall: -0.3,
   bodySemibold: -0.1,
+  titleH5: -0.2,
   h1: -1.5,
 } as const;
 
@@ -90,6 +93,10 @@ const VerticalTrim = {
   bodyMedium: {
     marginTop: -4.5,
     marginBottom: -4.5,
+  },
+  titleH5: {
+    marginTop: -5.5,
+    marginBottom: -5.5,
   },
   titleH1: {
     marginTop: -10,
@@ -114,7 +121,8 @@ export const Spacing = {
   contentPaddingTop: 16,
   contentPaddingVertical: 16,
   headerVerticalPadding: 12,
-  segmentedPaddingVertical: 32,
+  segmentedPaddingVertical: 40,
+  headerGreetingGap: 16,
   segmentTodayGap: 24,
 
   // Summary
@@ -123,7 +131,7 @@ export const Spacing = {
 
   // Tasks
   sectionGap: 32,
-  taskGap: 24,
+  taskGap: 20,
   taskRowGap: 16,
   taskContentGap: 14,
   taskMetaGap: 12,
@@ -185,21 +193,33 @@ export const TextStyles: Record<string, TextStyle> = {
 
   headerSecondary: withVerticalTrim(
     {
-      ...bodyMediumBase,
-      fontFamily: FontFamily.regular,
-      fontWeight: '400',
-      letterSpacing: LetterSpacing.bodyXSmall,
+      fontFamily: FontFamily.bold,
+      fontWeight: '700',
+      fontSize: FontSize.titleH5,
+      lineHeight: LineHeight.titleH5,
+      letterSpacing: LetterSpacing.titleH5,
       color: Colors.greetingLabel,
     },
-    VerticalTrim.bodyMedium,
+    VerticalTrim.titleH5,
   ),
   headerPrimary: withVerticalTrim(
     {
-      ...bodyMediumBase,
-      fontFamily: FontFamily.semibold,
+      fontFamily: FontFamily.bold,
       fontWeight: '700',
-      letterSpacing: LetterSpacing.bodySemibold,
-      color: Colors.greetingName,
+      fontSize: FontSize.titleH5,
+      lineHeight: LineHeight.titleH5,
+      letterSpacing: LetterSpacing.titleH5,
+      color: Colors.greetingLabel,
+    },
+    VerticalTrim.titleH5,
+  ),
+  dayLabel: withVerticalTrim(
+    {
+      ...bodyMediumBase,
+      fontFamily: FontFamily.medium,
+      fontWeight: '500',
+      letterSpacing: LetterSpacing.bodyXSmall,
+      color: Colors.summaryLabel,
     },
     VerticalTrim.bodyMedium,
   ),

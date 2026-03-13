@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import {
   Animated,
   Easing,
+  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -17,7 +18,23 @@ type TaskItemProps = {
   onToggle?: (id: string) => void;
   isRemoving?: boolean;
   onRemoveAnimationEnd?: (id: string) => void;
+  isSelected?: boolean;
+  isDragging?: boolean;
+  onOpenActions?: (id: string) => void;
+  onStartDrag?: () => void;
 };
+
+const LONG_PRESS_DRAG_DELAY_MS = 280;
+
+function MoreIcon() {
+  return (
+    <View style={styles.moreIcon}>
+      <View style={styles.moreDot} />
+      <View style={styles.moreDot} />
+      <View style={styles.moreDot} />
+    </View>
+  );
+}
 
 export default function TaskItem({
   task,
@@ -25,6 +42,10 @@ export default function TaskItem({
   onToggle,
   isRemoving = false,
   onRemoveAnimationEnd,
+  isSelected = false,
+  isDragging = false,
+  onOpenActions,
+  onStartDrag,
 }: TaskItemProps) {
   const fade = useRef(new Animated.Value(1)).current;
   const scale = useRef(new Animated.Value(1)).current;
@@ -56,6 +77,8 @@ export default function TaskItem({
     });
   }, [fade, isRemoving, onRemoveAnimationEnd, scale, task.id]);
 
+  const showHighlight = isDragging;
+
   return (
     <Animated.View
       style={[
@@ -66,6 +89,10 @@ export default function TaskItem({
         },
       ]}
     >
+      {showHighlight ? (
+        <View pointerEvents="none" style={styles.highlightBackground} />
+      ) : null}
+
       <TouchableOpacity
         style={[styles.checkbox, task.completed && styles.checkboxChecked]}
         onPress={() => onToggle?.(task.id)}
@@ -75,29 +102,66 @@ export default function TaskItem({
         {task.completed && <View style={styles.checkmark} />}
       </TouchableOpacity>
 
-      <View style={styles.content}>
-        <Text
-          style={[
-            task.completed
-              ? TextStyles.taskTitleCompleted
-              : TextStyles.taskTitle,
-            styles.titleText,
-          ]}
-          numberOfLines={1}
-        >
-          {task.title}
-        </Text>
-        <TaskMeta project={task.project} dueDate={task.dueDate} showDueDate={showDueDate} />
-      </View>
+      <Pressable
+        style={styles.contentPressable}
+        onLongPress={() => {
+          onStartDrag?.();
+        }}
+        delayLongPress={LONG_PRESS_DRAG_DELAY_MS}
+        disabled={isRemoving}
+      >
+        <View style={styles.content}>
+          <Text
+            style={[
+              task.completed
+                ? TextStyles.taskTitleCompleted
+                : TextStyles.taskTitle,
+              styles.titleText,
+            ]}
+            numberOfLines={1}
+          >
+            {task.title}
+          </Text>
+          <TaskMeta
+            project={task.project}
+            dueDate={task.dueDate}
+            showDueDate={showDueDate}
+          />
+        </View>
+      </Pressable>
+
+      <TouchableOpacity
+        style={styles.moreButton}
+        onPress={() => onOpenActions?.(task.id)}
+        disabled={isRemoving}
+        activeOpacity={0.7}
+        hitSlop={{ top: 12, bottom: 12, left: 13, right: 13 }}
+      >
+        <MoreIcon />
+      </TouchableOpacity>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    position: "relative",
     flexDirection: "row",
     alignSelf: "stretch",
+    alignItems: "center",
+    width: "100%",
     gap: Spacing.taskRowGap,
+    minHeight: 36,
+    overflow: "visible",
+  },
+  highlightBackground: {
+    position: "absolute",
+    left: -14,
+    right: -14,
+    top: -14,
+    bottom: -16,
+    backgroundColor: Colors.backgroundSecondary,
+    borderRadius: 8,
   },
   checkbox: {
     width: Spacing.checkboxSize,
@@ -125,6 +189,28 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     gap: Spacing.taskContentGap,
     flex: 1,
+  },
+  contentPressable: {
+    flex: 1,
+  },
+  moreButton: {
+    alignItems: "center",
+    borderRadius: Spacing.checkboxRadius,
+    height: 24,
+    justifyContent: "center",
+    width: 24,
+  },
+  moreIcon: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: 20,
+  },
+  moreDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.summaryLabel,
   },
   titleText: {
     // Avoid clipping from global vertical trim on single-line task titles.

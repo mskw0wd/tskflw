@@ -4,6 +4,7 @@ export type Task = {
   project: string;
   dueDate: string;
   completed: boolean;
+  sortOrder?: number;
 };
 
 export type ScreenTab = 'Today' | 'Upcoming' | 'Project';
