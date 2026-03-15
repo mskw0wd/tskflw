@@ -1,7 +1,9 @@
+import { MenuView, type MenuAction } from "@react-native-menu/menu";
 import React, { useEffect, useRef } from "react";
 import {
   Animated,
   Easing,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -21,10 +23,25 @@ type TaskItemProps = {
   isSelected?: boolean;
   isDragging?: boolean;
   onOpenActions?: (id: string) => void;
+  onNativeMenuAction?: (actionId: string, taskId: string) => void;
+  nativeMenuActions?: MenuAction[];
   onStartDrag?: () => void;
 };
 
 const LONG_PRESS_DRAG_DELAY_MS = 280;
+const seenTaskIds = new Set<string>();
+const AnimatedTouchableOpacity =
+  Animated.createAnimatedComponent(TouchableOpacity);
+
+function animatePressScale(value: Animated.Value, toValue: number) {
+  Animated.spring(value, {
+    toValue,
+    damping: 18,
+    stiffness: 320,
+    mass: 0.35,
+    useNativeDriver: true,
+  }).start();
+}
 
 function MoreIcon() {
   return (
@@ -45,11 +62,50 @@ export default function TaskItem({
   isSelected = false,
   isDragging = false,
   onOpenActions,
+  onNativeMenuAction,
+  nativeMenuActions = [],
   onStartDrag,
 }: TaskItemProps) {
-  const fade = useRef(new Animated.Value(1)).current;
-  const scale = useRef(new Animated.Value(1)).current;
+  const shouldAnimateEnter = !seenTaskIds.has(task.id);
+  const fade = useRef(new Animated.Value(shouldAnimateEnter ? 0 : 1)).current;
+  const scale = useRef(
+    new Animated.Value(shouldAnimateEnter ? 0.985 : 1)
+  ).current;
+  const translateY = useRef(
+    new Animated.Value(shouldAnimateEnter ? 8 : 0)
+  ).current;
+  const dragHighlight = useRef(new Animated.Value(0)).current;
+  const checkboxPressScale = useRef(new Animated.Value(1)).current;
+  const morePressScale = useRef(new Animated.Value(1)).current;
   const hasStartedExit = useRef(false);
+
+  useEffect(() => {
+    if (!shouldAnimateEnter) {
+      return;
+    }
+
+    seenTaskIds.add(task.id);
+    Animated.parallel([
+      Animated.timing(fade, {
+        toValue: 1,
+        duration: 240,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 260,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 260,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fade, scale, shouldAnimateEnter, task.id, translateY]);
 
   useEffect(() => {
     if (!isRemoving || hasStartedExit.current) {
@@ -60,13 +116,19 @@ export default function TaskItem({
     Animated.parallel([
       Animated.timing(fade, {
         toValue: 0,
-        duration: 380,
+        duration: 300,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: -10,
+        duration: 300,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.timing(scale, {
-        toValue: 0.96,
-        duration: 380,
+        toValue: 0.97,
+        duration: 300,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -75,9 +137,16 @@ export default function TaskItem({
         onRemoveAnimationEnd?.(task.id);
       }
     });
-  }, [fade, isRemoving, onRemoveAnimationEnd, scale, task.id]);
+  }, [fade, isRemoving, onRemoveAnimationEnd, scale, task.id, translateY]);
 
-  const showHighlight = isDragging;
+  useEffect(() => {
+    Animated.timing(dragHighlight, {
+      toValue: isDragging ? 1 : 0,
+      duration: isDragging ? 160 : 200,
+      easing: isDragging ? Easing.out(Easing.cubic) : Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start();
+  }, [dragHighlight, isDragging]);
 
   return (
     <Animated.View
@@ -85,22 +154,29 @@ export default function TaskItem({
         styles.container,
         {
           opacity: fade,
-          transform: [{ scaleY: scale }],
+          transform: [{ translateY }, { scale }],
         },
       ]}
     >
-      {showHighlight ? (
-        <View pointerEvents="none" style={styles.highlightBackground} />
-      ) : null}
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.highlightBackground, { opacity: dragHighlight }]}
+      />
 
-      <TouchableOpacity
-        style={[styles.checkbox, task.completed && styles.checkboxChecked]}
+      <AnimatedTouchableOpacity
+        style={[
+          styles.checkbox,
+          task.completed && styles.checkboxChecked,
+          { transform: [{ scale: checkboxPressScale }] },
+        ]}
         onPress={() => onToggle?.(task.id)}
+        onPressIn={() => animatePressScale(checkboxPressScale, 0.92)}
+        onPressOut={() => animatePressScale(checkboxPressScale, 1)}
         disabled={task.completed || isRemoving}
         activeOpacity={0.7}
       >
         {task.completed && <View style={styles.checkmark} />}
-      </TouchableOpacity>
+      </AnimatedTouchableOpacity>
 
       <Pressable
         style={styles.contentPressable}
@@ -130,15 +206,44 @@ export default function TaskItem({
         </View>
       </Pressable>
 
-      <TouchableOpacity
-        style={styles.moreButton}
-        onPress={() => onOpenActions?.(task.id)}
-        disabled={isRemoving}
-        activeOpacity={0.7}
-        hitSlop={{ top: 12, bottom: 12, left: 13, right: 13 }}
-      >
-        <MoreIcon />
-      </TouchableOpacity>
+      {Platform.OS === "ios" &&
+      !isRemoving &&
+      onNativeMenuAction &&
+      nativeMenuActions.length > 0 ? (
+        <MenuView
+          title={task.title}
+          actions={nativeMenuActions}
+          shouldOpenOnLongPress={false}
+          hitSlop={{ top: 12, bottom: 12, left: 13, right: 13 }}
+          onPressAction={({ nativeEvent }) => {
+            onNativeMenuAction(nativeEvent.event, task.id);
+          }}
+        >
+          <Animated.View
+            style={[
+              styles.moreButton,
+              { transform: [{ scale: morePressScale }] },
+            ]}
+          >
+            <MoreIcon />
+          </Animated.View>
+        </MenuView>
+      ) : (
+        <AnimatedTouchableOpacity
+          style={[
+            styles.moreButton,
+            { transform: [{ scale: morePressScale }] },
+          ]}
+          onPress={() => onOpenActions?.(task.id)}
+          onPressIn={() => animatePressScale(morePressScale, 0.9)}
+          onPressOut={() => animatePressScale(morePressScale, 1)}
+          disabled={isRemoving}
+          activeOpacity={0.7}
+          hitSlop={{ top: 12, bottom: 12, left: 13, right: 13 }}
+        >
+          <MoreIcon />
+        </AnimatedTouchableOpacity>
+      )}
     </Animated.View>
   );
 }
@@ -158,7 +263,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: -14,
     right: -14,
-    top: -14,
+    top: -12,
     bottom: -16,
     backgroundColor: Colors.backgroundSecondary,
     borderRadius: 8,
@@ -187,7 +292,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flexDirection: "column",
-    gap: Spacing.taskContentGap,
+    gap: Spacing.taskContentGap - 4,
     flex: 1,
   },
   contentPressable: {
@@ -196,25 +301,28 @@ const styles = StyleSheet.create({
   moreButton: {
     alignItems: "center",
     borderRadius: Spacing.checkboxRadius,
-    height: 24,
+    height: 20,
     justifyContent: "center",
-    width: 24,
+    width: 20,
   },
   moreIcon: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    width: 20,
+    width: 16.67,
+    opacity: 0.7,
   },
   moreDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 3.33,
+    height: 3.33,
+    borderRadius: 1.67,
     backgroundColor: Colors.summaryLabel,
   },
   titleText: {
     // Avoid clipping from global vertical trim on single-line task titles.
     marginTop: 0,
     marginBottom: 0,
+    fontSize: 17,
+    lineHeight: 21,
   },
 });

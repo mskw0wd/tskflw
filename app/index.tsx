@@ -1,10 +1,13 @@
+import { type MenuAction } from '@react-native-menu/menu';
+import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActionSheetIOS,
   Alert,
   Animated,
-  Easing,
+  Platform,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -31,6 +34,8 @@ type TaskTargetContext = {
   taskId: string;
 };
 
+type TaskMenuActionId = 'add-due-date' | 'move-to' | 'copy-link' | 'delete';
+
 type TabPageProps = {
   tab: ScreenTab;
   tasks: Task[];
@@ -40,9 +45,11 @@ type TabPageProps = {
   onToggleTask: (id: string) => void;
   onTaskHidden: (id: string) => void;
   onOpenTaskActions: (id: string) => void;
+  onTaskNativeMenuAction?: (actionId: string, taskId: string) => void;
+  nativeMenuActions?: MenuAction[];
   onReorderTasks: (tasks: Task[]) => void;
   onTaskDragStart: (taskId: string) => void;
-  onTaskDragEnd: () => void;
+  onTaskDragEnd: (didReorder: boolean) => void;
 };
 
 type AnimatedSegmentedHeaderProps = {
@@ -73,6 +80,32 @@ function buildTaskLink(taskId: string) {
   return `lumi://task/${taskId}`;
 }
 
+const IOS_TASK_MENU_ACTIONS: MenuAction[] = [
+  {
+    id: 'add-due-date',
+    title: 'Add due date',
+    image: 'calendar',
+  },
+  {
+    id: 'move-to',
+    title: 'Move to',
+    image: 'folder',
+  },
+  {
+    id: 'copy-link',
+    title: 'Copy link',
+    image: 'link',
+  },
+  {
+    id: 'delete',
+    title: 'Delete',
+    attributes: {
+      destructive: true,
+    },
+    image: 'trash',
+  },
+];
+
 function withSortOrder(tasks: Task[]) {
   return tasks.map((task, index) => ({
     ...task,
@@ -89,6 +122,8 @@ function TabPage({
   onToggleTask,
   onTaskHidden,
   onOpenTaskActions,
+  onTaskNativeMenuAction,
+  nativeMenuActions,
   onReorderTasks,
   onTaskDragStart,
   onTaskDragEnd,
@@ -106,6 +141,8 @@ function TabPage({
       onToggleTask={onToggleTask}
       onTaskHidden={onTaskHidden}
       onOpenTaskActions={onOpenTaskActions}
+      onTaskNativeMenuAction={onTaskNativeMenuAction}
+      nativeMenuActions={nativeMenuActions}
       onReorderTasks={onReorderTasks}
       onDragStart={onTaskDragStart}
       onDragEnd={onTaskDragEnd}
@@ -166,7 +203,12 @@ function AnimatedSegmentedHeader({ swipeX, pageWidth, tasksByTab }: AnimatedSegm
 
 export default function TodayScreen() {
   const { width: screenWidth } = useWindowDimensions();
+  const usesNativeTaskMenu =
+    Platform.OS === 'ios' && Constants.executionEnvironment !== 'storeClient';
+  const usesSystemActionSheet = Platform.OS === 'ios' && !usesNativeTaskMenu;
+  const usesBottomSheetTaskMenu = Platform.OS !== 'ios' && !usesNativeTaskMenu;
 
+  const pagerRef = useRef<Animated.ScrollView | null>(null);
   const swipeX = useRef(new Animated.Value(0)).current;
   const [activeTab, setActiveTab] = useState<ScreenTab>('Today');
   const [hasNewNotification, setHasNewNotification] = useState(true);
@@ -205,13 +247,11 @@ export default function TodayScreen() {
       return;
     }
 
-    Animated.timing(swipeX, {
-      toValue: activeIndex * screenWidth,
-      duration: 240,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
-  }, [activeTab, screenWidth, swipeX]);
+    pagerRef.current?.scrollTo({
+      x: activeIndex * screenWidth,
+      animated: true,
+    });
+  }, [activeTab, screenWidth]);
 
   const handleFooterTabPress = (tab: ScreenTab) => {
     if (isListDragging) {
@@ -290,22 +330,65 @@ export default function TodayScreen() {
     });
 
     if (taskActionsContext?.tab === tab && taskActionsContext.taskId === taskId) {
-      setTaskActionsContext(null);
       setIsTaskActionsVisible(false);
     }
   };
 
   const handleTaskActionsClose = () => {
     setIsTaskActionsVisible(false);
+  };
+
+  const handleTaskActionsClosed = () => {
     setTaskActionsContext(null);
   };
 
+  const showSystemTaskActionSheet = (tab: ScreenTab, taskId: string) => {
+    const context: TaskTargetContext = { tab, taskId };
+
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        title: tasksByTab[tab].find((task) => task.id === taskId)?.title,
+        options: ['Add due date', 'Move to', 'Copy link', 'Delete', 'Cancel'],
+        cancelButtonIndex: 4,
+        destructiveButtonIndex: 3,
+      },
+      (buttonIndex) => {
+        switch (buttonIndex) {
+          case 0:
+            handleAddDueDate(context);
+            break;
+          case 1:
+            handleMoveTo(context);
+            break;
+          case 2:
+            void handleCopyLink(context);
+            break;
+          case 3:
+            handleDeleteTask(context);
+            break;
+          default:
+            break;
+        }
+      },
+    );
+  };
+
   const handleTaskActionsOpen = (tab: ScreenTab, taskId: string) => {
+    if (usesNativeTaskMenu) {
+      return;
+    }
+
     if (isListDragging || removingTaskReasonsByTab[tab][taskId]) {
       return;
     }
 
     triggerHaptic();
+
+    if (usesSystemActionSheet) {
+      showSystemTaskActionSheet(tab, taskId);
+      return;
+    }
+
     setTaskActionsContext({ tab, taskId });
     setIsTaskActionsVisible(true);
   };
@@ -323,8 +406,12 @@ export default function TodayScreen() {
     setIsListDragging(true);
   };
 
-  const handleTaskDragEnd = () => {
+  const handleTaskDragEnd = (didReorder: boolean) => {
     setIsListDragging(false);
+
+    if (didReorder) {
+      void Haptics.selectionAsync();
+    }
   };
 
   const handleReorderTasks = (tab: ScreenTab, nextTasks: Task[]) => {
@@ -334,12 +421,17 @@ export default function TodayScreen() {
     }));
   };
 
-  const handleDeleteTask = () => {
-    if (!taskActionsContext) {
+  const resolveTaskContext = (targetContext?: TaskTargetContext | null) => {
+    return targetContext ?? taskActionsContext;
+  };
+
+  const handleDeleteTask = (targetContext?: TaskTargetContext | null) => {
+    const context = resolveTaskContext(targetContext);
+    if (!context) {
       return;
     }
 
-    const { tab, taskId } = taskActionsContext;
+    const { tab, taskId } = context;
     triggerHaptic();
 
     setRemovingTaskReasonsByTab((prev) => {
@@ -356,12 +448,13 @@ export default function TodayScreen() {
     });
   };
 
-  const handleAddDueDate = () => {
-    if (!taskActionsContext) {
+  const handleAddDueDate = (targetContext?: TaskTargetContext | null) => {
+    const context = resolveTaskContext(targetContext);
+    if (!context) {
       return;
     }
 
-    const { tab, taskId } = taskActionsContext;
+    const { tab, taskId } = context;
     const dueDateLabel = formatDueDateLabel(new Date());
     triggerHaptic();
 
@@ -406,12 +499,13 @@ export default function TodayScreen() {
     });
   };
 
-  const handleMoveTo = () => {
-    if (!taskActionsContext) {
+  const handleMoveTo = (targetContext?: TaskTargetContext | null) => {
+    const context = resolveTaskContext(targetContext);
+    if (!context) {
       return;
     }
 
-    const { tab, taskId } = taskActionsContext;
+    const { tab, taskId } = context;
     const destinationTabs = TABS.filter((tabItem) => tabItem !== tab);
 
     Alert.alert('Move task', 'Select destination list', [
@@ -429,20 +523,53 @@ export default function TodayScreen() {
     ]);
   };
 
-  const handleCopyLink = async () => {
-    if (!taskActionsContext) {
+  const handleCopyLink = async (targetContext?: TaskTargetContext | null) => {
+    const context = resolveTaskContext(targetContext);
+    if (!context) {
       return;
     }
 
-    const link = buildTaskLink(taskActionsContext.taskId);
+    const link = buildTaskLink(context.taskId);
     await Clipboard.setStringAsync(link);
     triggerHaptic();
+  };
+
+  const handleNativeTaskMenuAction = (tab: ScreenTab, actionId: string, taskId: string) => {
+    const context: TaskTargetContext = { tab, taskId };
+
+    switch (actionId as TaskMenuActionId) {
+      case 'add-due-date':
+        handleAddDueDate(context);
+        break;
+      case 'move-to':
+        handleMoveTo(context);
+        break;
+      case 'copy-link':
+        void handleCopyLink(context);
+        break;
+      case 'delete':
+        handleDeleteTask(context);
+        break;
+      default:
+        break;
+    }
   };
 
   const handleNotificationPress = () => {
     triggerHaptic();
     setHasNewNotification(false);
     setIsNotificationCenterOpen((prev) => !prev);
+  };
+
+  const handlePagerMomentumEnd = (event: { nativeEvent: { contentOffset: { x: number } } }) => {
+    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
+    const nextTab = TABS[nextIndex];
+    if (!nextTab || nextTab === activeTab) {
+      return;
+    }
+
+    triggerHaptic();
+    setActiveTab(nextTab);
   };
 
   return (
@@ -462,26 +589,52 @@ export default function TodayScreen() {
         </View>
 
         <View style={styles.pager}>
-          <View style={[styles.page, { width: screenWidth }]}>
-            <TabPage
-              key={activeTab}
-              tab={activeTab}
-              tasks={tasksByTab[activeTab]}
-              removingTaskReasons={removingTaskReasonsByTab[activeTab]}
-              selectedTaskId={
-                isTaskActionsVisible && taskActionsContext?.tab === activeTab
-                  ? taskActionsContext.taskId
-                  : null
-              }
-              isActiveTab
-              onToggleTask={(taskId) => handleToggleTask(activeTab, taskId)}
-              onTaskHidden={(taskId) => handleTaskHidden(activeTab, taskId)}
-              onOpenTaskActions={(taskId) => handleTaskActionsOpen(activeTab, taskId)}
-              onReorderTasks={(nextTasks) => handleReorderTasks(activeTab, nextTasks)}
-              onTaskDragStart={(taskId) => handleTaskDragStart(activeTab, taskId)}
-              onTaskDragEnd={handleTaskDragEnd}
-            />
-          </View>
+          <Animated.ScrollView
+            ref={pagerRef}
+            style={styles.pagerScroll}
+            horizontal
+            pagingEnabled
+            directionalLockEnabled
+            bounces={false}
+            overScrollMode="never"
+            showsHorizontalScrollIndicator={false}
+            scrollEnabled={!isListDragging && !isTaskActionsVisible}
+            scrollEventThrottle={16}
+            onMomentumScrollEnd={handlePagerMomentumEnd}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { x: swipeX } } }],
+              { useNativeDriver: false },
+            )}
+            contentContainerStyle={styles.pagesRow}
+          >
+            {TABS.map((tab) => (
+              <View key={tab} style={[styles.page, { width: screenWidth }]}>
+                <TabPage
+                  tab={tab}
+                  tasks={tasksByTab[tab]}
+                  removingTaskReasons={removingTaskReasonsByTab[tab]}
+                  selectedTaskId={
+                    isTaskActionsVisible && taskActionsContext?.tab === tab
+                      ? taskActionsContext.taskId
+                      : null
+                  }
+                  isActiveTab={tab === activeTab}
+                  onToggleTask={(taskId) => handleToggleTask(tab, taskId)}
+                  onTaskHidden={(taskId) => handleTaskHidden(tab, taskId)}
+                  onOpenTaskActions={(taskId) => handleTaskActionsOpen(tab, taskId)}
+                  onTaskNativeMenuAction={
+                    usesNativeTaskMenu
+                      ? (actionId, taskId) => handleNativeTaskMenuAction(tab, actionId, taskId)
+                      : undefined
+                  }
+                  nativeMenuActions={usesNativeTaskMenu ? IOS_TASK_MENU_ACTIONS : undefined}
+                  onReorderTasks={(nextTasks) => handleReorderTasks(tab, nextTasks)}
+                  onTaskDragStart={(taskId) => handleTaskDragStart(tab, taskId)}
+                  onTaskDragEnd={handleTaskDragEnd}
+                />
+              </View>
+            ))}
+          </Animated.ScrollView>
         </View>
 
         <FooterBar
@@ -493,17 +646,20 @@ export default function TodayScreen() {
           onVoice={() => console.log('Voice input')}
         />
 
-        <TaskActionsBottomSheet
-          visible={isTaskActionsVisible}
-          task={selectedTask}
-          onClose={handleTaskActionsClose}
-          onAddDueDate={handleAddDueDate}
-          onMoveTo={handleMoveTo}
-          onCopyLink={() => {
-            void handleCopyLink();
-          }}
-          onDelete={handleDeleteTask}
-        />
+        {usesBottomSheetTaskMenu ? (
+          <TaskActionsBottomSheet
+            visible={isTaskActionsVisible}
+            task={selectedTask}
+            onClose={handleTaskActionsClose}
+            onClosed={handleTaskActionsClosed}
+            onAddDueDate={handleAddDueDate}
+            onMoveTo={handleMoveTo}
+            onCopyLink={() => {
+              void handleCopyLink();
+            }}
+            onDelete={handleDeleteTask}
+          />
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -523,12 +679,21 @@ const styles = StyleSheet.create({
   },
   pager: {
     flex: 1,
+    overflow: 'hidden',
+  },
+  pagerScroll: {
+    flex: 1,
   },
   page: {
     flex: 1,
+    flexShrink: 0,
+  },
+  pagesRow: {
+    flexDirection: 'row',
   },
   segmentedControl: {
-    paddingVertical: Spacing.segmentedPaddingVertical,
+    paddingTop: Spacing.segmentedPaddingVertical,
+    paddingBottom: Spacing.segmentedPaddingVertical - 16,
   },
   segmentedAnimatedViewport: {
     position: 'relative',

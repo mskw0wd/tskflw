@@ -1,12 +1,13 @@
+import { type MenuAction } from '@react-native-menu/menu';
 import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
-import DraggableFlatList, {
-  type RenderItemParams,
-} from 'react-native-draggable-flatlist';
+import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist';
 
 import { Spacing } from '../constants/theme';
 import type { Task } from '../data/tasks';
 import TaskItem from './TaskItem';
+
+const TASK_LIST_TOP_BUFFER = 16;
 
 type ReorderableTaskListProps = {
   tasks: Task[];
@@ -17,9 +18,11 @@ type ReorderableTaskListProps = {
   onToggleTask: (id: string) => void;
   onTaskHidden: (id: string) => void;
   onOpenTaskActions: (id: string) => void;
+  onTaskNativeMenuAction?: (actionId: string, taskId: string) => void;
+  nativeMenuActions?: MenuAction[];
   onReorderTasks: (tasks: Task[]) => void;
   onDragStart: (taskId: string) => void;
-  onDragEnd: () => void;
+  onDragEnd: (didReorder: boolean) => void;
 };
 
 function TaskRow({
@@ -31,6 +34,8 @@ function TaskRow({
   onToggleTask,
   onTaskHidden,
   onOpenTaskActions,
+  onTaskNativeMenuAction,
+  nativeMenuActions,
   onStartDrag,
 }: {
   task: Task;
@@ -41,6 +46,8 @@ function TaskRow({
   onToggleTask: (id: string) => void;
   onTaskHidden: (id: string) => void;
   onOpenTaskActions: (id: string) => void;
+  onTaskNativeMenuAction?: (actionId: string, taskId: string) => void;
+  nativeMenuActions?: MenuAction[];
   onStartDrag?: () => void;
 }) {
   return (
@@ -54,6 +61,8 @@ function TaskRow({
         isSelected={isSelected}
         isDragging={isDragging}
         onOpenActions={onOpenTaskActions}
+        onNativeMenuAction={onTaskNativeMenuAction}
+        nativeMenuActions={nativeMenuActions}
         onStartDrag={onStartDrag}
       />
     </View>
@@ -69,6 +78,8 @@ export default function ReorderableTaskList({
   onToggleTask,
   onTaskHidden,
   onOpenTaskActions,
+  onTaskNativeMenuAction,
+  nativeMenuActions,
   onReorderTasks,
   onDragStart,
   onDragEnd,
@@ -82,40 +93,62 @@ export default function ReorderableTaskList({
         removeClippedSubviews={false}
         data={tasks}
         keyExtractor={(task) => task.id}
-        renderItem={({ item }) => (
-          <TaskRow
-            task={item}
-            showDueDate={showDueDate}
-            isRemoving={Boolean(removingTaskIds[item.id])}
-            isSelected={selectedTaskId === item.id}
-            onToggleTask={onToggleTask}
-            onTaskHidden={onTaskHidden}
-            onOpenTaskActions={onOpenTaskActions}
-          />
+        renderItem={({ item, index }) => (
+          <View
+            style={[
+              styles.taskCell,
+              index < tasks.length - 1 && styles.taskCellWithGap,
+            ]}
+          >
+            <TaskRow
+              task={item}
+              showDueDate={showDueDate}
+              isRemoving={Boolean(removingTaskIds[item.id])}
+              isSelected={selectedTaskId === item.id}
+              onToggleTask={onToggleTask}
+              onTaskHidden={onTaskHidden}
+              onOpenTaskActions={onOpenTaskActions}
+              onTaskNativeMenuAction={onTaskNativeMenuAction}
+              nativeMenuActions={nativeMenuActions}
+            />
+          </View>
         )}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
     );
   }
 
-  const renderItem = ({ item, drag, isActive }: RenderItemParams<Task>) => (
-    <TaskRow
-      task={item}
-      showDueDate={showDueDate}
-      isRemoving={Boolean(removingTaskIds[item.id])}
-      isSelected={selectedTaskId === item.id}
-      isDragging={isActive}
-      onToggleTask={onToggleTask}
-      onTaskHidden={onTaskHidden}
-      onOpenTaskActions={onOpenTaskActions}
-      onStartDrag={() => {
-        if (removingTaskIds[item.id]) {
-          return;
-        }
-        drag();
-      }}
-    />
-  );
+  const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Task>) => {
+    const index = getIndex();
+    const hasBottomGap = typeof index === 'number' ? index < tasks.length - 1 : false;
+
+    return (
+      <View
+        style={[
+          styles.taskCell,
+          hasBottomGap && styles.taskCellWithGap,
+        ]}
+      >
+        <TaskRow
+          task={item}
+          showDueDate={showDueDate}
+          isRemoving={Boolean(removingTaskIds[item.id])}
+          isSelected={selectedTaskId === item.id}
+          isDragging={isActive}
+          onToggleTask={onToggleTask}
+          onTaskHidden={onTaskHidden}
+          onOpenTaskActions={onOpenTaskActions}
+          onTaskNativeMenuAction={onTaskNativeMenuAction}
+          nativeMenuActions={nativeMenuActions}
+          onStartDrag={() => {
+            if (removingTaskIds[item.id]) {
+              return;
+            }
+            drag();
+          }}
+        />
+      </View>
+    );
+  };
 
   return (
     <DraggableFlatList
@@ -126,7 +159,6 @@ export default function ReorderableTaskList({
       data={tasks}
       keyExtractor={(task) => task.id}
       renderItem={renderItem}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
       activationDistance={20}
       autoscrollThreshold={72}
       autoscrollSpeed={180}
@@ -144,9 +176,9 @@ export default function ReorderableTaskList({
           onDragStart(task.id);
         }
       }}
-      onDragEnd={({ data }) => {
+      onDragEnd={({ data, from, to }) => {
         onReorderTasks(data);
-        onDragEnd();
+        onDragEnd(from !== to);
       }}
     />
   );
@@ -159,13 +191,17 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing.screenPadding,
     paddingBottom: Spacing.taskListBottomPadding,
-    paddingTop: 16,
-  },
-  separator: {
-    height: Spacing.taskGap,
+    paddingTop: TASK_LIST_TOP_BUFFER,
   },
   taskRow: {
     width: '100%',
     overflow: 'visible',
+  },
+  taskCell: {
+    width: '100%',
+    overflow: 'visible',
+  },
+  taskCellWithGap: {
+    paddingBottom: Spacing.taskGap + 2,
   },
 });
